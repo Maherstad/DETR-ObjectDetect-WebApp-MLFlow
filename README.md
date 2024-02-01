@@ -11,7 +11,7 @@ ObjectDetect-WebApp-MLFlow is a comprehensive solution integrating object detect
 - Custom PyFunc class for MLflow vision models.
 
 
-## Installation (locally)
+## Installation (local)
 1. create a virtual environment (using conda)  
 ```bash
 conda create --name venv python=3.10 
@@ -43,3 +43,12 @@ streamlit run webstie.py --server.port 5000
 ```
 
 6. send requests to the server interactivally using the website or by going to `send_request_to_serve.ipynb` and running the code snippet
+
+## Installation (cloud)
+
+follow the steps 1. to 3. 
+
+4. TODO : instruction for building Docker image and deployment
+```bash
+code
+```
