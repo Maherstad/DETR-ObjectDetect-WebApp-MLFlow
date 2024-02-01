@@ -125,3 +125,4 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
 if __name__ == '__main__':
     detrwrapper = DETRWrapper()
     detrwrapper.log_model()
+    detrwrapper.register_and_stage_model()
