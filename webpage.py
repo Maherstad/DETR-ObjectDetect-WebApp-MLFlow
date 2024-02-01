@@ -1,7 +1,7 @@
 import streamlit as st
-from model_deployment_example.utils import detect_objects, get_image_bytes
+from utils import detect_objects, get_image_bytes
 import io
-from model_deployment_example.utils import generate_text
+
 
 
 # ----------- Sidebar

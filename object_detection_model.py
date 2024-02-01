@@ -54,7 +54,7 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
 
     def register_and_stage_model(self,):
         run_id = os.environ['RUN_ID']
-        subpath = "experiment_x"
+        subpath = "experiment_1"
         model_name = self.registered_model_name
         run_uri = f"runs://{run_id}/{subpath}"
         model_version = mlflow.register_model(run_uri,model_name)
@@ -64,7 +64,7 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
         client.transition_model_version_stage(
                 name = self.registered_model_name,
                 version = 1,
-            stage = "Staging",
+            stage = "Production",
 
             
         )

@@ -12,22 +12,27 @@ ObjectDetect-WebApp-MLFlow is a comprehensive solution integrating object detect
 
 
 ## Installation (local)
+0. clone the repository  
+```bash
+git clone https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow.git
+```
+
 1. create a virtual environment (using conda)  
 ```bash
 conda create --name venv python=3.10 
 conda activate venv
-pip install -r requirements
+pip install -r requirements.txt
 ```
 (optional) you can add a kernel from the virtual environment to your jupyter notebook using   
 `python -m ipykernel install --user --name venv --display-name "venv kernel"`
 
 
-2. run the mlflow server
+2. navigate to the repository's folder and run the mlflow server
 ```bash
 mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 6000
 ```
 
-3. run the model.py to allow mlflow to log the model, register it and move it to staging/development
+3. run the model.py to allow mlflow to log the model, register it and move it to Production
 ```bash
 python object_detection_model.py
 ```
@@ -39,7 +44,7 @@ mlflow models serve -m <path_to_model> -p 7000 --no-conda
 
 5. launch the webpage
 ```bash
-streamlit run webstie.py --server.port 5000
+streamlit run webpage.py --server.port 5000
 ```
 
 6. send requests to the server interactivally using the website or by going to `send_request_to_serve.ipynb` and running the code snippet
