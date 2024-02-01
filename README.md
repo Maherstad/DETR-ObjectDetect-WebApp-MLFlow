@@ -1,5 +1,5 @@
 # DETR-ObjectDetect-WebApp-MLFlow
-![object_detection_test_gif](https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif)
+![object_detection_test_gif]([https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif](https://gifyu.com/image/SCEzp))
 
 
 
