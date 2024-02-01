@@ -1,88 +1,80 @@
-import io
-import base64
-import json
+import os
 import torch
-import mlflow 
-
+import mlflow
 import pandas as pd
-from PIL import Image,ImageDraw
+from PIL import Image, ImageDraw
 from transformers import DetrImageProcessor, DetrForObjectDetection
 
-from utils import decode_and_resize_image,json_to_image,image_to_json,dataframe_to_image,image_to_dataframe
+from utils import dataframe_to_image, image_to_dataframe
 
 # Custom PyFunc model
 class DETRWrapper(mlflow.pyfunc.PythonModel):
 
     def __init__(self,
-                  tracking_uri = "http://0.0.0.0:6000",
-                  set_experiment="Object Detection Experiment",
-                  artifact_path = "object_detector",
-                  registered_model_name = "DETR_Object_Detection_Model",
+                 tracking_uri="http://0.0.0.0:5000",
+                 set_experiment="Object Detection Experiment",
+                 artifact_path="object_detector",
+                 registered_model_name="DETR_Object_Detection_Model",
                 ):
         
         self.tracking_uri = tracking_uri
-        self.set_experiment =set_experiment
-        self.artifact_path =artifact_path
-        self.registered_model_name =registered_model_name
+        self.set_experiment = set_experiment
+        self.artifact_path = artifact_path
+        self.registered_model_name = registered_model_name
 
-
-    def load_context(self,context):
+    def load_context(self, context):
         self.processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
         self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
     def log_model(self):
-        
         try:
             mlflow.set_tracking_uri(self.tracking_uri)
             mlflow.set_experiment(self.set_experiment)
 
             # Start an MLflow run
-            with mlflow.start_run():
-
-                # Log the custom PyFunc model
+            with mlflow.start_run() as run:
+                # Log the custom PyFunc model using the current instance
                 model_info = mlflow.pyfunc.log_model(
                     artifact_path=self.artifact_path,
-                    python_model=DETRWrapper(),
+                    python_model=self,
                     registered_model_name=self.registered_model_name
                 )
-            print("model logged successfully")
+            print("Model logged successfully. Run ID: ", run.info.run_id)
+            return run.info.run_id  # Returning the run_id for further use
 
         except Exception as e:
-            print(f"Error in logging model{e}")
+            print(f"Error in logging model: {e}")
             return None
 
+    def register_and_stage_model(self, run_id):
+        if not run_id:
+            print("Run ID not provided. Cannot register model.")
+            return None
 
-    def register_and_stage_model(self,):
-        run_id = os.environ['RUN_ID']
-        subpath = "experiment_1"
-        model_name = self.registered_model_name
-        run_uri = f"runs://{run_id}/{subpath}"
-        model_version = mlflow.register_model(run_uri,model_name)
+        try:
+            model_uri = f"runs:/{run_id}/{self.artifact_path}"
+            model_version_info = mlflow.register_model(model_uri, self.registered_model_name)
 
-        client = mlflow.MlflowClient()
+            client = mlflow.MlflowClient()
+            client.transition_model_version_stage(
+                name=self.registered_model_name,
+                version=model_version_info.version,
+                stage="Production"
+            )
+            print("Model registered and staged successfully.")
+            return model_version_info
 
-        client.transition_model_version_stage(
-                name = self.registered_model_name,
-                version = 1,
-            stage = "Production",
+        except Exception as e:
+            print(f"Error in registering and staging model: {e}")
+            return None
 
-            
-        )
-        
-        return None
-
-    def predict(self,context, input):
-
+    def predict(self, context, input):
         """
         Generate predictions for the data.
-
-        :param input: pandas.DataFrame with one column containing images to be scored. The image
-                     column must contain base64 encoded binary content of the image files. The image
-                     format must be supported by PIL (e.g. jpeg or png).
-
-        :return: TODO fill return type
+        :param input: pandas.DataFrame with one column containing images to be scored.
+        :return: pandas.DataFrame with the processed image
         """
-        print("_"*25,"type of input data: ",type(input),"_"*25)
+        print("_" * 25, "Type of input data: ", type(input), "_" * 25)
         try:
             image = dataframe_to_image(input)
 
@@ -93,8 +85,8 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
             # Convert outputs to COCO API and filter detections
             target_sizes = torch.tensor([image.size[::-1]])
             results = self.processor.post_process_object_detection(outputs,
-                                                                   target_sizes=target_sizes,
-                                                                   threshold=0.9)[0]
+                                                                  target_sizes=target_sizes,
+                                                                  threshold=0.9)[0]
 
             # Draw the bounding boxes on the image
             draw = ImageDraw.Draw(image)
@@ -102,18 +94,9 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
                 box = [round(i, 2) for i in box.tolist()]
                 draw.rectangle(box, outline="red", width=3)
 
-                # Get class name and draw it
                 class_name = self.model.config.id2label[label.item()]
                 text_position = (box[2], box[1])  # Top right corner of the bounding box
                 draw.text(text_position, class_name, fill="red")
-                
-                # Optionally, you can print the detections as well
-                # print(
-                #     f"Detected {self.model.config.id2label[label.item()]} with confidence "
-                #     f"{round(score.item(), 3)} at location {box}"
-                # )
-
-
 
             return image_to_dataframe(image)
 
@@ -124,5 +107,6 @@ class DETRWrapper(mlflow.pyfunc.PythonModel):
 
 if __name__ == '__main__':
     detrwrapper = DETRWrapper()
-    detrwrapper.log_model()
-    detrwrapper.register_and_stage_model()
+    run_id = detrwrapper.log_model()
+    if run_id:
+        detrwrapper.register_and_stage_model(run_id)
