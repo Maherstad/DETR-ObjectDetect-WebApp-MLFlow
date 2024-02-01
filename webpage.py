@@ -3,16 +3,6 @@ from utils import detect_objects, get_image_bytes
 import io
 
 
-
-# ----------- Sidebar
-page = st.sidebar.selectbox('Page Navigation', ["Objects Detector", "Text Generation", "other models (coming soon)"])
-
-st.sidebar.markdown("""---""")
-st.sidebar.write("Created by Maher https://github.com/Maherstad")
-st.sidebar.image("assets/logo.png", width=100)
-
-
-
 st.title('Object Detection')
 
 sample_images = ['./assets/street.jpg', './assets/safari.jpg','./assets/bedroom.jpg']
