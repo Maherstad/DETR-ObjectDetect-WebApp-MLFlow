@@ -1,7 +1,8 @@
 # DETR-ObjectDetect-WebApp-MLFlow
-![](https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif)
 
-
+<div align="center">
+    <img src="https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif" alt="Object Detection Test GIF">
+</div>
 
 ## Introduction
 ObjectDetect-WebApp-MLFlow is a comprehensive solution integrating object detection using a HuggingFace model, MLflow for model management, a Streamlit-based web interface, and Docker for deployment. 
