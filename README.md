@@ -10,15 +10,22 @@ Object detection system using DETR (DEtection TRansformer) with MLflow experimen
 
 ## Architecture
 
-```
-Streamlit Web UI
-       ↓
-Model Server (MLflow) → DETR Model
-       ↓
-MLflow Tracking Server
-       ↓
-SQLite DB + Artifact Storage
-```
+The system consists of three containerized services:
+
+**MLflow Tracking Server** (port 5050)
+- Manages experiment tracking and model versioning
+- Stores metadata in SQLite database
+- Stores model artifacts locally
+
+**Model Server** (port 7100)
+- Serves the production DETR model via REST API
+- Loads registered models from MLflow
+- Handles object detection inference requests
+
+**Streamlit Web App** (port 8501)
+- Provides interactive user interface
+- Sends images to Model Server for predictions
+- Displays detection results with bounding boxes
 
 Three containerized services:
 - MLflow Server (port 5050) - experiment tracking
