@@ -1,7 +1,7 @@
 # DETR Object Detection Web Application
 
 <div align="center">
-<img src="https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif" alt="Object Detection Demo" width="800">
+<img src="https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif" alt="Object Detection Demo" width="600">
 </div>
 
 ## Overview
@@ -10,20 +10,22 @@ Object detection system using DETR (DEtection TRansformer) with MLflow experimen
 
 ## Architecture
 
-```
-Streamlit Web UI
-       ↓
-Model Server (MLflow) → DETR Model
-       ↓
-MLflow Tracking Server
-       ↓
-SQLite DB + Artifact Storage
-```
+The system consists of three containerized services:
 
-Three containerized services:
-- MLflow Server (port 5050) - experiment tracking
-- Model Server (port 7100) - inference API
-- Streamlit App (port 8501) - web interface
+**MLflow Tracking Server** (port 5050)
+- Manages experiment tracking and model versioning
+- Stores metadata in SQLite database
+- Stores model artifacts locally
+
+**Model Server** (port 7100)
+- Serves the production DETR model via REST API
+- Loads registered models from MLflow
+- Handles object detection inference requests
+
+**Streamlit Web App** (port 8501)
+- Provides interactive user interface
+- Sends images to Model Server for predictions
+- Displays detection results with bounding boxes
 
 ## Installation
 
@@ -83,14 +85,6 @@ docker-compose logs -f     # View logs
 docker-compose down        # Stop services
 ```
 
-## Performance
-
-Baseline DETR ResNet-50 on COCO:
-- mAP: 0.42 (pre-trained baseline)
-- Achievable: 0.89 with fine-tuning and optimization
-- Inference: ~150ms/image (CPU), ~30ms (GPU)
-- Model size: 167MB
-
 ## Advanced Features
 
 ### Hyperparameter Optimization
@@ -100,14 +94,6 @@ python hyperparameter_optimization.py
 ```
 
 Optimizes: learning rate, batch size, epochs, weight decay, optimizer, scheduler, dropout. Results tracked in MLflow.
-
-### Model Evaluation
-
-```bash
-python evaluate_model.py
-```
-
-Calculates COCO metrics and logs to MLflow.
 
 ### Automated Retraining
 
@@ -124,7 +110,6 @@ Monitors data directory, triggers retraining when thresholds met, auto-promotes 
 ├── webpage.py                           # Streamlit web app
 ├── utils.py                             # Helper functions
 ├── send_request_to_server.py           # API client example
-├── evaluate_model.py                    # COCO evaluation
 ├── hyperparameter_optimization.py       # Optuna tuning
 ├── automated_retraining.py              # Automated pipeline
 ├── Dockerfile                           # Container definition
