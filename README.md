@@ -1,7 +1,7 @@
 # DETR Object Detection Web Application
 
 <div align="center">
-<img src="https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif" alt="Object Detection Demo" width="600">
+<img src="https://github.com/Maherstad/DETR-ObjectDetect-WebApp-MLFlow/blob/main/assets/od_test.gif" alt="Object Detection Demo" width="500">
 </div>
 
 ## Overview
