@@ -1,0 +1,16 @@
+mlruns
+__pycache__/
+*.pyc
+.env
+.vscode/
+.DS_Store
+.idea/
+data/
+logs/
+models/
+notebooks/.ipynb_checkpoints/
+secrets.json
+config.yaml
+*.log
+.github/
+mlflow.db

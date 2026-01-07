@@ -11,7 +11,7 @@ from utils import dataframe_to_image, image_to_dataframe
 class DETRWrapper(mlflow.pyfunc.PythonModel):
 
     def __init__(self,
-                 tracking_uri="http://0.0.0.0:5000",
+                 tracking_uri="http://127.0.0.1:5050",
                  set_experiment="Object Detection Experiment",
                  artifact_path="object_detector",
                  registered_model_name="DETR_Object_Detection_Model",

@@ -7,7 +7,7 @@ from utils import string_to_pil_image
 
 path = './assets/bedroom.jpg'
 host = 'http://127.0.0.1'
-port = '7000'
+port = '7100'
 
 def read_image(x):
     with open(x, "rb") as f:

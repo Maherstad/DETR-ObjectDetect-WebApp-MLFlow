@@ -5,8 +5,6 @@ import json
 import mlflow 
 import base64
 import pandas as pd 
-import requests
-import json
 import numpy as np 
 
 from io import BytesIO
@@ -14,7 +12,7 @@ from PIL import Image, ImageDraw
 
 def detect_objects(image): #input is bytes object 
     
-    url = "http://127.0.0.1:7000/invocations"  # Replace with the actual URL of your model server
+    url = "http://127.0.0.1:7100/invocations"  # Replace with the actual URL of your model server
     headers={"Content-Type": "text/csv"}
     
     # Send the image data to the server

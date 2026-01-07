@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mlflow:
+    build: .
+    container_name: mlflow-server
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlflow.db:/app/mlflow.db
+    networks:
+      - app-network
+    command: >
+      mlflow server 
+      --backend-store-uri sqlite:///mlflow.db 
+      --default-artifact-root ./mlruns 
+      --host 0.0.0.0 
+      --port 5050
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  model-server:
+    build: .
+    container_name: model-server
+    ports:
+      - "7100:7100"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlflow.db:/app/mlflow.db
+    networks:
+      - app-network
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5050
+    command: >
+      sh -c "python object_detection_model_pipeline.py && 
+      mlflow models serve -m models:/DETR_Object_Detection_Model/Production -p 7100 --host 0.0.0.0 --no-conda"
+
+  streamlit-app:
+    build: .
+    container_name: streamlit-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./assets:/app/assets
+    networks:
+      - app-network
+    depends_on:
+      - model-server
+    environment:
+      - MODEL_SERVER_URL=http://model-server:7100
+    command: streamlit run webpage.py --server.port 8501 --server.address 0.0.0.0
+
+networks:
+  app-network:
+    driver: bridge
