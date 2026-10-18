@@ -1,0 +1,14 @@
+{
+  "val_set": "2026-10-batch-01-val@cce78f710174",
+  "train_set": "2026-10-batch-01-train@422ff867c7d6",
+  "steps": 250,
+  "batch_size": 4,
+  "parent_version": "1",
+  "mlflow_run": "f79bc0bf402c47b6b1e8f81df3d5a4dd",
+  "val_map": {
+    "champion (no training)": 0.4753,
+    "lr1e-5_no-warmup": 0.4765,
+    "lr1e-5_warmup": 0.464,
+    "lr2e-6_frozen-backbone": 0.4832
+  }
+}

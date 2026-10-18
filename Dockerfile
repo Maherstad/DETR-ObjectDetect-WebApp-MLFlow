@@ -1,37 +1,28 @@
-# Multi-stage build for efficient image size
-FROM python:3.10-slim as builder
+# One image for every service (tracking server, bootstrap job, model server, UI).
+FROM python:3.12-slim
+
+COPY --from=ghcr.io/astral-sh/uv:0.10.5 /uv /usr/local/bin/uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    MLFLOW_DISABLE_AGENT_HINT=1 \
+    GIT_PYTHON_REFRESH=quiet \
+    HF_HOME=/cache/hf
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Dependencies first, so code changes don't reinstall torch.
+COPY pyproject.toml uv.lock README.md ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --extra ui --no-install-project
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+COPY src ./src
+COPY app ./app
+COPY assets ./assets
+COPY .streamlit ./.streamlit
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --extra ui
 
-# Final stage
-FROM python:3.10-slim
-
-WORKDIR /app
-
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Copy application files
-COPY . .
-
-# Create MLflow directories
-RUN mkdir -p mlruns && \
-    mkdir -p assets
-
-# Make Python packages available
-ENV PATH=/root/.local/bin:$PATH
-
-# Expose ports
-EXPOSE 5050 7100 8501
-
-# Default command (can be overridden in docker-compose)
-CMD ["mlflow", "server", "--backend-store-uri", "sqlite:///mlflow.db", "--default-artifact-root", "./mlruns", "--host", "0.0.0.0", "--port", "5050"]
+RUN useradd --create-home app && mkdir -p /cache/hf /mlflow && chown -R app /cache /mlflow
+USER app

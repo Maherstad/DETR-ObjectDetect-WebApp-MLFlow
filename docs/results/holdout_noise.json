@@ -1,0 +1,16 @@
+{
+  "holdout": "holdout@6f9bb17985b0",
+  "n_images": 500,
+  "n_boot": 200,
+  "versions": [
+    "1",
+    "3"
+  ],
+  "map_a_std": 0.0135,
+  "diff_mean": 0.002,
+  "diff_std": 0.0015,
+  "diff_ci95": [
+    -0.001,
+    0.0047
+  ]
+}
