@@ -1,16 +1,21 @@
-mlruns
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+.venv
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# MLflow and data (never in git)
+.mlflow/
+mlruns/
+mlartifacts/
+mlflow.db
+data/
+
+# Local
 .env
-.vscode/
 .DS_Store
 .idea/
-data/
-logs/
-models/
-notebooks/.ipynb_checkpoints/
-secrets.json
-config.yaml
-*.log
-.github/
-mlflow.db
+.vscode/

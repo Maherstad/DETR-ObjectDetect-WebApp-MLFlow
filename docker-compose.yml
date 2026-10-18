@@ -1,62 +1,66 @@
-version: '3.8'
+# docker compose up --build
+#   UI         http://localhost:8501
+#   MLflow     http://localhost:5050
+#   Model API  http://localhost:7100/invocations
+name: detr-lifecycle
+
+x-app: &app
+  build: .
+  image: detr-lifecycle:local
+  environment:
+    MLFLOW_TRACKING_URI: http://mlflow:5050
+  volumes:
+    - hf-cache:/cache/hf
 
 services:
   mlflow:
-    build: .
-    container_name: mlflow-server
-    ports:
-      - "5050:5050"
-    volumes:
-      - ./mlruns:/app/mlruns
-      - ./mlflow.db:/app/mlflow.db
-    networks:
-      - app-network
+    <<: *app
     command: >
-      mlflow server 
-      --backend-store-uri sqlite:///mlflow.db 
-      --default-artifact-root ./mlruns 
-      --host 0.0.0.0 
-      --port 5050
+      mlflow server
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --host 0.0.0.0 --port 5050
+      --allowed-hosts "mlflow:5050,localhost,localhost:*,127.0.0.1,127.0.0.1:*"
+    volumes:
+      - mlflow-data:/mlflow
+    ports: ["${MLFLOW_PORT:-5050}:5050"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5050/health')"]
+      interval: 5s
+      retries: 20
 
+  # One-shot: registers facebook/detr-resnet-50 as @champion if the registry has none.
+  bootstrap:
+    <<: *app
+    command: detr-lifecycle bootstrap
+    depends_on:
+      mlflow: { condition: service_healthy }
+    restart: "no"
+
+  # Resolves @champion once at start. Promotion or rollback = `docker compose restart model-server`.
   model-server:
-    build: .
-    container_name: model-server
-    ports:
-      - "7100:7100"
-    volumes:
-      - ./mlruns:/app/mlruns
-      - ./mlflow.db:/app/mlflow.db
-    networks:
-      - app-network
-    depends_on:
-      mlflow:
-        condition: service_healthy
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5050
+    <<: *app
     command: >
-      sh -c "python object_detection_model_pipeline.py && 
-      mlflow models serve -m models:/DETR_Object_Detection_Model/Production -p 7100 --host 0.0.0.0 --no-conda"
-
-  streamlit-app:
-    build: .
-    container_name: streamlit-app
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./assets:/app/assets
-    networks:
-      - app-network
+      mlflow models serve -m models:/detr-object-detector@champion
+      --env-manager local --host 0.0.0.0 --port 7100 --workers 1
     depends_on:
-      - model-server
-    environment:
-      - MODEL_SERVER_URL=http://model-server:7100
-    command: streamlit run webpage.py --server.port 8501 --server.address 0.0.0.0
+      bootstrap: { condition: service_completed_successfully }
+    ports: ["${MODEL_PORT:-7100}:7100"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7100/ping')"]
+      interval: 5s
+      retries: 60
 
-networks:
-  app-network:
-    driver: bridge
+  ui:
+    <<: *app
+    command: streamlit run app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5050
+      MODEL_SERVER_URL: http://model-server:7100
+    depends_on:
+      model-server: { condition: service_healthy }
+    ports: ["${UI_PORT:-8501}:8501"]
+
+volumes:
+  mlflow-data:
+  hf-cache:
